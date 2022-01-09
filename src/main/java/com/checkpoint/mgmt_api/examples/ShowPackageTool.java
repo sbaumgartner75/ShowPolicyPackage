@@ -1897,7 +1897,6 @@ public class ShowPackageTool {
 	                try {
 	                	int total = Integer.parseInt(j1.get("total").toString()) + Integer.parseInt(j2.get("total").toString());
 	                	j1.put("total", total);
-	                	 
 	                } catch (Exception e) {
 	                	// Ignore errors
 	                }
