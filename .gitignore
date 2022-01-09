@@ -17,3 +17,8 @@ target/
 # Avoid IntelliJ
 .idea/
 *.iml
+
+# Avoid Eclipse
+.project
+.classpath
+.settings/
