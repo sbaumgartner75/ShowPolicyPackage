@@ -405,8 +405,8 @@ public class ShowPackageTool {
 
         for (String command : commands) {
             try {
-                configuration.getLogger().debug("Run command: '" + command + "' with details level 'full'");
-                res = client.apiQuery(loginResponse,command, "objects", "{\"details-level\" : \"full\"}");
+                configuration.getLogger().debug("Run command: '" + command + "' with details level 'standard'");
+                res = client.apiQuery(loginResponse,command, "objects", "{\"details-level\" : \"standard\"}");
             }
             catch (ApiClientException e) {
                 configuration.getLogger().warning("Failed to execute command: " +command + ". Exception: " + e.getMessage());
