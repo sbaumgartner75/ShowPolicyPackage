@@ -1809,7 +1809,6 @@ public class ShowPackageTool {
         public ApiResponse call()
         {
             ApiResponse res = null;
-           
 
             try {
                 res = client.apiCall(loginResponse, command, payload);
@@ -1822,9 +1821,9 @@ public class ShowPackageTool {
             	// Save old offset + limit to write correct log
             	int offset = Integer.parseInt(payload.get("offset").toString());
             	int limit = Integer.parseInt(payload.get("limit").toString());
-            	
+
                 res = binarySplitCall(payload, offset, limit, true);
-                
+
                 // Restore saved offset + limit
                 payload.put("offset", offset);
                 payload.put("limit", limit);
@@ -1835,14 +1834,14 @@ public class ShowPackageTool {
 
             return res;
         }
-        
+
         private ApiResponse binarySplitCall(JSONObject payload, int offset, int limit, boolean initial)
         {
         	ApiResponse res = null;
-        	
+
         	payload.put("offset", offset);
         	payload.put("limit", limit);
-            
+
             // Avoid calling if call came from "call"
             if (!initial) {
                 String log = "binarySplitCall - Command [" + command + "] uid " + payload.get("uid") + " limit " + payload.get("limit") + " offset " + payload.get("offset") + " ";
@@ -1858,6 +1857,7 @@ public class ShowPackageTool {
             
             if (res == null || !res.isSuccess()) {
 
+            	// No need to retry a failed limit = 1 call. 
             	if (limit > 1) {
 
 	            	int lower_offset = offset;
@@ -1874,7 +1874,7 @@ public class ShowPackageTool {
 	                		j1 = r1.getPayload();
 	                	}
 	                } catch (Exception e) {
-	                
+
 	                }
 	                
 	                try {
@@ -1883,29 +1883,25 @@ public class ShowPackageTool {
 	                		j2 = r2.getPayload();
 	                	}
 	                } catch (Exception e) {
-	                	
+
 	                }
-	                
-/*	                
-	                int total = 0;
-	                int to = 0;
-	                int from = 0;
+
+	                // Update "to" and "total" based on information from 2nd (upper) JSON object 
+	                try {
+	                	int to = Integer.parseInt(j2.get("to").toString());
+	                	j1.put("to", to);
+	                } catch (Exception e) {
+	                	// Ignore errors
+	                }
 
 	                try {
-
-	                	total = Integer.parseInt(j1.get("total").toString());
-	                	total += Integer.parseInt(j2.get("total").toString());
-	                	to = Integer.parseInt(j1.get("to").toString()) > Integer.parseInt(j2.get("to").toString()) ? Integer.parseInt(j1.get("to").toString()) :Integer.parseInt(j2.get("to").toString());
-	                	from = Integer.parseInt(j1.get("from").toString()) < Integer.parseInt(j2.get("from").toString()) ? Integer.parseInt(j1.get("from").toString()) :Integer.parseInt(j2.get("to").toString());
-
+	                	int total = Integer.parseInt(j1.get("total").toString()) + Integer.parseInt(j2.get("total").toString());
+	                	j1.put("total", total);
+	                	 
 	                } catch (Exception e) {
-	                	
-	                }  
+	                	// Ignore errors
+	                }
 
-	                j1.put("total", total);
-	                j1.put("from", from);
-	                j1.put("to", to);
-*/
 	                // Append objects-dictionary
 	                try {
 		                JSONArray od1 = (JSONArray) j1.get("objects-dictionary");
@@ -1913,9 +1909,9 @@ public class ShowPackageTool {
 		                od1.addAll(od2);
 		                j1.put("objects-dictionary", od1);
 	                } catch (Exception e) {
-	                	
+	                	// Ignore errors
 	                }  
-	                
+
 	                // Append rulebase
 	                try {
 		                JSONArray rb1 = (JSONArray) j1.get("rulebase");
@@ -1923,9 +1919,9 @@ public class ShowPackageTool {
                 		rb1.addAll(rb2);
                 		j1.put("rulebase", rb1);
 	                } catch (Exception e) {
-	                	
+	                	// Ignore errors
 	                }  
-	                
+
 	                return new ApiResponse(200,j1);
             	}
                 return res;
