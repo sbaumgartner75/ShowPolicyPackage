@@ -1808,7 +1808,9 @@ public class ShowPackageTool {
         @Override
         public ApiResponse call()
         {
-            ApiResponse res;
+            ApiResponse res = null;
+           
+
             try {
                 res = client.apiCall(loginResponse, command, payload);
             }
@@ -1817,12 +1819,117 @@ public class ShowPackageTool {
             }
 
             if (res == null || !res.isSuccess()) {
-                res = null;
+            	// Save old offset + limit to write correct log
+            	int offset = Integer.parseInt(payload.get("offset").toString());
+            	int limit = Integer.parseInt(payload.get("limit").toString());
+            	
+                res = binarySplitCall(payload, offset, limit, true);
+                
+                // Restore saved offset + limit
+                payload.put("offset", offset);
+                payload.put("limit", limit);
             }
 
             String log = "Command [" + command + "] uid " + payload.get("uid") + " limit " + payload.get("limit") + " offset " + payload.get("offset") + " ";
             configuration.getLogger().debug(log + (res == null ? "FAILED" : "SUCCESSFUL"));
 
+            return res;
+        }
+        
+        private ApiResponse binarySplitCall(JSONObject payload, int offset, int limit, boolean initial)
+        {
+        	ApiResponse res = null;
+        	
+        	payload.put("offset", offset);
+        	payload.put("limit", limit);
+            
+            // Avoid calling if call came from "call"
+            if (!initial) {
+                String log = "binarySplitCall - Command [" + command + "] uid " + payload.get("uid") + " limit " + payload.get("limit") + " offset " + payload.get("offset") + " ";
+                configuration.getLogger().debug(log);
+
+            	try {
+            		res = client.apiCall(loginResponse, command, payload);
+            	} 
+            	catch (Exception e) {
+            		res = null;
+            	}
+            }
+            
+            if (res == null || !res.isSuccess()) {
+
+            	if (limit > 1) {
+
+	            	int lower_offset = offset;
+	            	int lower_limit = (limit / 2 > 0) ? (limit / 2) : 1;
+	            	int upper_offset = offset + lower_limit;
+	            	int upper_limit = limit - lower_limit;
+
+                	JSONObject j1 = new JSONObject();
+                	JSONObject j2 = new JSONObject();
+	            	
+	                try {
+	                	ApiResponse r1 = binarySplitCall(payload, lower_offset, lower_limit, false);
+	                	if (r1.isSuccess()) {
+	                		j1 = r1.getPayload();
+	                	}
+	                } catch (Exception e) {
+	                
+	                }
+	                
+	                try {
+	                	ApiResponse r2 = binarySplitCall(payload, upper_offset, upper_limit, false);
+	                	if (r2.isSuccess()) {
+	                		j2 = r2.getPayload();
+	                	}
+	                } catch (Exception e) {
+	                	
+	                }
+	                
+/*	                
+	                int total = 0;
+	                int to = 0;
+	                int from = 0;
+
+	                try {
+
+	                	total = Integer.parseInt(j1.get("total").toString());
+	                	total += Integer.parseInt(j2.get("total").toString());
+	                	to = Integer.parseInt(j1.get("to").toString()) > Integer.parseInt(j2.get("to").toString()) ? Integer.parseInt(j1.get("to").toString()) :Integer.parseInt(j2.get("to").toString());
+	                	from = Integer.parseInt(j1.get("from").toString()) < Integer.parseInt(j2.get("from").toString()) ? Integer.parseInt(j1.get("from").toString()) :Integer.parseInt(j2.get("to").toString());
+
+	                } catch (Exception e) {
+	                	
+	                }  
+
+	                j1.put("total", total);
+	                j1.put("from", from);
+	                j1.put("to", to);
+*/
+	                // Append objects-dictionary
+	                try {
+		                JSONArray od1 = (JSONArray) j1.get("objects-dictionary");
+		                JSONArray od2 = (JSONArray) j2.get("objects-dictionary");
+		                od1.addAll(od2);
+		                j1.put("objects-dictionary", od1);
+	                } catch (Exception e) {
+	                	
+	                }  
+	                
+	                // Append rulebase
+	                try {
+		                JSONArray rb1 = (JSONArray) j1.get("rulebase");
+		                JSONArray rb2 = (JSONArray) j2.get("rulebase");
+                		rb1.addAll(rb2);
+                		j1.put("rulebase", rb1);
+	                } catch (Exception e) {
+	                	
+	                }  
+	                
+	                return new ApiResponse(200,j1);
+            	}
+                return res;
+            }
             return res;
         }
     }
