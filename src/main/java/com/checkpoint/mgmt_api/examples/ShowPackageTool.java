@@ -1886,17 +1886,10 @@ public class ShowPackageTool {
 
 	                }
 
-	                // Update "to" and "total" based on information from 2nd (upper) JSON object 
+	                // Update "to" based on information from 2nd (upper) JSON object 
 	                try {
 	                	int to = Integer.parseInt(j2.get("to").toString());
 	                	j1.put("to", to);
-	                } catch (Exception e) {
-	                	// Ignore errors
-	                }
-
-	                try {
-	                	int total = Integer.parseInt(j1.get("total").toString()) + Integer.parseInt(j2.get("total").toString());
-	                	j1.put("total", total);
 	                } catch (Exception e) {
 	                	// Ignore errors
 	                }
@@ -1907,16 +1900,22 @@ public class ShowPackageTool {
 		                JSONArray od2 = (JSONArray) j2.get("objects-dictionary");
 		                od1.addAll(od2);
 		                j1.put("objects-dictionary", od1);
+		                String log = "binarySplitCall - Command [" + command + "] uid " + payload.get("uid") + " limit " + payload.get("limit") + " offset " + payload.get("offset") + " - merged objects-dictionary";
+		                configuration.getLogger().debug(log);
+		                
 	                } catch (Exception e) {
 	                	// Ignore errors
 	                }  
 
 	                // Append rulebase
 	                try {
-		                JSONArray rb1 = (JSONArray) j1.get("rulebase");
+	                	JSONArray rb1 = (JSONArray) j1.get("rulebase");
 		                JSONArray rb2 = (JSONArray) j2.get("rulebase");
                 		rb1.addAll(rb2);
                 		j1.put("rulebase", rb1);
+		                String log = "binarySplitCall - Command [" + command + "] uid " + payload.get("uid") + " limit " + payload.get("limit") + " offset " + payload.get("offset") + " - merged rulebase";
+		                configuration.getLogger().debug(log);
+
 	                } catch (Exception e) {
 	                	// Ignore errors
 	                }  
